@@ -3,7 +3,7 @@
 
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>COSMIC — 1993 McLaren F1</title>
   <style>
     * {
@@ -206,22 +206,23 @@
 
     @media(max-width: 700px) {
       .quality-controls {
-        left: 14px;
-        bottom: 58px;
+        left: calc(14px + env(safe-area-inset-left));
+        bottom: calc(58px + env(safe-area-inset-bottom));
         flex-direction: column;
         gap: 6px;
       }
 
       .quality-control {
         justify-content: space-between;
-        min-width: 148px;
-        padding: 5px 7px;
+        min-width: 154px;
+        min-height: 40px;
+        padding: 5px 8px;
       }
 
       .quality-control select {
         min-width: 68px;
-        padding-top: 4px;
-        padding-bottom: 4px;
+        min-height: 30px;
+        padding: 4px 22px 4px 8px;
       }
     }
 
@@ -388,24 +389,27 @@
 
     @media(max-width: 700px) {
       .cinematic-toggle {
-        left: 18px;
-        top: 62px;
-        padding: 7px 10px;
+        left: calc(18px + env(safe-area-inset-left));
+        top: calc(62px + env(safe-area-inset-top));
+        min-height: 38px;
+        padding: 8px 11px;
         font-size: 9px;
       }
 
       .selection-toggle {
-        left: 18px;
-        top: 94px;
-        padding: 7px 10px;
+        left: calc(18px + env(safe-area-inset-left));
+        top: calc(104px + env(safe-area-inset-top));
+        min-height: 38px;
+        padding: 8px 11px;
         font-size: 9px;
       }
 
       .hud .panel {
-        top: 135px;
-        right: 14px;
-        left: 14px;
+        top: calc(152px + env(safe-area-inset-top));
+        right: calc(14px + env(safe-area-inset-right));
+        left: calc(14px + env(safe-area-inset-left));
         width: auto;
+        min-height: 48px;
         padding: 10px 12px;
         display: flex;
         align-items: center;
@@ -416,7 +420,12 @@
 
       .panel h2 {
         margin: 0;
-        font-size: 15px;
+        flex: 1;
+        min-width: 0;
+        overflow: hidden;
+        font-size: clamp(13px, 4vw, 15px);
+        text-overflow: ellipsis;
+        white-space: nowrap;
       }
 
       .panel p,
@@ -429,20 +438,24 @@
         margin: 0;
         padding: 5px 7px;
         font-size: 9px;
+        white-space: nowrap;
       }
 
       .top {
-        left: 18px;
-        top: 18px;
+        left: calc(18px + env(safe-area-inset-left));
+        top: calc(14px + env(safe-area-inset-top));
       }
 
       .hint {
-        bottom: 14px;
+        bottom: calc(12px + env(safe-area-inset-bottom));
         left: auto;
-        right: 14px;
+        right: calc(14px + env(safe-area-inset-right));
         transform: none;
-        font-size: 10px;
-        white-space: nowrap;
+        max-width: calc(100vw - 190px - env(safe-area-inset-left) - env(safe-area-inset-right));
+        padding: 11px 13px;
+        font-size: 9px;
+        line-height: 1.25;
+        text-align: center;
       }
 
       .logo {
@@ -451,9 +464,24 @@
     }
 
     @media(max-height: 560px) and (orientation: landscape) {
+      .top {
+        top: calc(8px + env(safe-area-inset-top));
+        left: calc(18px + env(safe-area-inset-left));
+      }
+
+      .logo {
+        font-size: 20px;
+      }
+
+      .sub {
+        margin-top: 2px;
+        font-size: 8px;
+        letter-spacing: .18em;
+      }
+
       .hud .panel {
-        top: 14px;
-        right: 14px;
+        top: calc(12px + env(safe-area-inset-top));
+        right: calc(14px + env(safe-area-inset-right));
         left: auto;
         width: min(255px, 38vw);
         padding: 10px;
@@ -481,25 +509,41 @@
       }
 
       .cinematic-toggle {
-        top: 74px;
-        left: 18px;
+        top: calc(62px + env(safe-area-inset-top));
+        left: calc(18px + env(safe-area-inset-left));
       }
 
       .selection-toggle {
-        top: 108px;
-        left: 18px;
+        top: calc(104px + env(safe-area-inset-top));
+        left: calc(18px + env(safe-area-inset-left));
       }
 
       .quality-controls {
-        bottom: 52px;
-        left: 12px;
+        bottom: calc(48px + env(safe-area-inset-bottom));
+        left: calc(12px + env(safe-area-inset-left));
       }
 
       .hint {
-        bottom: 12px;
-        right: 12px;
+        bottom: calc(10px + env(safe-area-inset-bottom));
+        right: calc(12px + env(safe-area-inset-right));
         left: auto;
+        max-width: calc(100vw - 180px - env(safe-area-inset-left) - env(safe-area-inset-right));
         transform: none;
+      }
+    }
+
+    @media(max-width: 360px) {
+      .sub {
+        font-size: 8px;
+        letter-spacing: .2em;
+      }
+
+      .quality-control {
+        min-width: 146px;
+      }
+
+      .quality-control select {
+        min-width: 62px;
       }
     }
   </style>
@@ -1104,6 +1148,19 @@
     const mouse = new THREE.Vector2();
     const selectionToggle = document.getElementById('selectionToggle');
     const interactionHint = document.getElementById('interactionHint');
+    const isTouchInput = matchMedia('(pointer: coarse)').matches;
+
+    function updateInteractionHint() {
+      const selectionAction = objectSelectionEnabled
+        ? `${isTouchInput ? 'TAP' : 'CLICK'} PARTS • `
+        : '';
+      const cameraAction = isTouchInput
+        ? 'DRAG TO ROTATE • PINCH TO ZOOM'
+        : 'DRAG TO ROTATE • WHEEL TO ZOOM';
+      interactionHint.textContent = `${selectionAction}${cameraAction}`;
+    }
+
+    updateInteractionHint();
 
     function clearSelection(vehicleId = activeVehicleId || selectedVehicleId) {
       if (selected) {
@@ -1119,9 +1176,7 @@
       selectionToggle.textContent = objectSelectionEnabled
         ? 'OBJECT SELECTION • ON'
         : 'OBJECT SELECTION • OFF';
-      interactionHint.textContent = objectSelectionEnabled
-        ? 'CLICK PARTS • DRAG TO ROTATE • WHEEL TO ZOOM'
-        : 'DRAG TO ROTATE • WHEEL TO ZOOM';
+      updateInteractionHint();
       if (!objectSelectionEnabled) clearSelection();
     });
 
