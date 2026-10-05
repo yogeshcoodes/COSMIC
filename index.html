@@ -983,6 +983,7 @@
       activeVehicleId = vehicleId;
       activeModelRoot = loadedModel.root;
       car.add(activeModelRoot);
+      bmwContactShadow.visible = vehicleId === 'bmw';
       const shadowExtent = vehicleId === 'bmw' ? 6.5 : 10;
       key.shadow.camera.left = -shadowExtent;
       key.shadow.camera.right = shadowExtent;
@@ -1123,6 +1124,37 @@
     platformEdge.rotation.x = Math.PI / 2;
     platformEdge.position.y = .022;
     scene.add(platformEdge);
+
+    const contactShadowCanvas = document.createElement('canvas');
+    contactShadowCanvas.width = 512;
+    contactShadowCanvas.height = 256;
+    const contactShadowContext = contactShadowCanvas.getContext('2d');
+    const contactShadowGradient = contactShadowContext.createRadialGradient(256, 128, 12, 256, 128, 238);
+    contactShadowGradient.addColorStop(0, 'rgba(3, 6, 11, .76)');
+    contactShadowGradient.addColorStop(.28, 'rgba(3, 6, 11, .54)');
+    contactShadowGradient.addColorStop(.62, 'rgba(3, 6, 11, .18)');
+    contactShadowGradient.addColorStop(1, 'rgba(3, 6, 11, 0)');
+    contactShadowContext.fillStyle = contactShadowGradient;
+    contactShadowContext.fillRect(0, 0, 512, 256);
+    const contactShadowTexture = new THREE.CanvasTexture(contactShadowCanvas);
+    const bmwContactShadow = new THREE.Mesh(
+      new THREE.PlaneGeometry(5, 1.5),
+      new THREE.MeshBasicMaterial({
+        map: contactShadowTexture,
+        color: 0x101722,
+        depthWrite: false,
+        polygonOffset: true,
+        polygonOffsetFactor: -1,
+        polygonOffsetUnits: -1,
+        toneMapped: false,
+        transparent: true
+      })
+    );
+    bmwContactShadow.rotation.x = -Math.PI / 2;
+    bmwContactShadow.position.set(0, .021, 0);
+    bmwContactShadow.renderOrder = 1;
+    bmwContactShadow.visible = false;
+    car.add(bmwContactShadow);
 
     scene.add(new THREE.HemisphereLight(0xc6d9ed, 0x34313a, .55));
 
