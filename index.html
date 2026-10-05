@@ -1127,18 +1127,30 @@
 
     const contactShadowCanvas = document.createElement('canvas');
     contactShadowCanvas.width = 512;
-    contactShadowCanvas.height = 256;
+    contactShadowCanvas.height = 512;
     const contactShadowContext = contactShadowCanvas.getContext('2d');
-    const contactShadowGradient = contactShadowContext.createRadialGradient(256, 128, 12, 256, 128, 238);
-    contactShadowGradient.addColorStop(0, 'rgba(3, 6, 11, .76)');
-    contactShadowGradient.addColorStop(.28, 'rgba(3, 6, 11, .54)');
-    contactShadowGradient.addColorStop(.62, 'rgba(3, 6, 11, .18)');
-    contactShadowGradient.addColorStop(1, 'rgba(3, 6, 11, 0)');
-    contactShadowContext.fillStyle = contactShadowGradient;
-    contactShadowContext.fillRect(0, 0, 512, 256);
+    function paintContactShadow(x, y, radiusX, radiusY, strength) {
+      contactShadowContext.save();
+      contactShadowContext.translate(x, y);
+      contactShadowContext.scale(radiusX, radiusY);
+      const gradient = contactShadowContext.createRadialGradient(0, 0, 0, 0, 0, 1);
+      gradient.addColorStop(0, `rgba(3, 6, 11, ${strength})`);
+      gradient.addColorStop(.38, `rgba(3, 6, 11, ${strength * .72})`);
+      gradient.addColorStop(.72, `rgba(3, 6, 11, ${strength * .28})`);
+      gradient.addColorStop(1, 'rgba(3, 6, 11, 0)');
+      contactShadowContext.fillStyle = gradient;
+      contactShadowContext.fillRect(-1, -1, 2, 2);
+      contactShadowContext.restore();
+    }
+
+    paintContactShadow(256, 256, 190, 220, .22);
+    paintContactShadow(96, 114, 76, 48, .58);
+    paintContactShadow(416, 114, 76, 48, .58);
+    paintContactShadow(96, 414, 76, 48, .58);
+    paintContactShadow(416, 414, 76, 48, .58);
     const contactShadowTexture = new THREE.CanvasTexture(contactShadowCanvas);
     const bmwContactShadow = new THREE.Mesh(
-      new THREE.PlaneGeometry(5, 1.5),
+      new THREE.PlaneGeometry(2.8, 5.1),
       new THREE.MeshBasicMaterial({
         map: contactShadowTexture,
         color: 0x101722,
