@@ -1128,19 +1128,37 @@
     contactShadowContext.fillStyle = contactShadowGradient;
     contactShadowContext.fillRect(0, 0, 256, 256);
     const contactShadowTexture = new THREE.CanvasTexture(contactShadowCanvas);
+    const bmwCastShadow = new THREE.Mesh(
+      new THREE.PlaneGeometry(6.4, 3.8),
+      new THREE.MeshBasicMaterial({
+        map: contactShadowTexture,
+        color: 0x080d15,
+        depthWrite: false,
+        opacity: .78,
+        toneMapped: false,
+        transparent: true
+      })
+    );
+    bmwCastShadow.rotation.x = -Math.PI / 2;
+    bmwCastShadow.position.set(-.38, .021, -.42);
+    bmwCastShadow.renderOrder = 1;
+    bmwCastShadow.visible = false;
+    car.add(bmwCastShadow);
+
     const bmwContactShadow = new THREE.Mesh(
-      new THREE.PlaneGeometry(6.1, 3.6),
+      new THREE.PlaneGeometry(5.6, 1.8),
       new THREE.MeshBasicMaterial({
         map: contactShadowTexture,
         color: 0x070b12,
         depthWrite: false,
         opacity: .96,
+        toneMapped: false,
         transparent: true
       })
     );
     bmwContactShadow.rotation.x = -Math.PI / 2;
-    bmwContactShadow.position.set(-.12, .035, -.12);
-    bmwContactShadow.renderOrder = 1;
+    bmwContactShadow.position.set(-.12, .022, -.12);
+    bmwContactShadow.renderOrder = 2;
     bmwContactShadow.visible = false;
     car.add(bmwContactShadow);
 
