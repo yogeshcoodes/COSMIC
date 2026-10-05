@@ -589,9 +589,37 @@
       const screen = document.getElementById('loadingScreen');
       if (screen.classList.contains('is-hidden') || screen.classList.contains('has-error')) return;
       document.getElementById('loadingStatus').textContent =
-        'Still loading. Check your connection to the 3D libraries and model.';
-      screen.classList.add('has-error');
+        'Still loading. Large downloads can take a while; keep this page open.';
     }, 30000);
+  </script>
+  <script>
+    window.showroomServiceWorkerReady = (async () => {
+      if (!('serviceWorker' in navigator) || location.protocol === 'file:') return;
+      try {
+        await navigator.serviceWorker.register('./service-worker.js');
+        await navigator.serviceWorker.ready;
+        if (!navigator.serviceWorker.controller) {
+          await new Promise(resolve => {
+            navigator.serviceWorker.addEventListener('controllerchange', resolve, { once: true });
+            window.setTimeout(resolve, 3000);
+          });
+        }
+      } catch (error) {
+        console.warn('Persistent showroom asset caching could not be enabled:', error);
+      }
+    })();
+    if (navigator.storage && typeof navigator.storage.persist === 'function') {
+      const requestPersistentStorage = async () => {
+        try {
+          const isPersistent = await navigator.storage.persist();
+          if (!isPersistent) console.info('Browser storage may be cleared automatically when device storage is low.');
+        } catch (error) {
+          console.warn('Persistent browser storage could not be requested:', error);
+        }
+      };
+      requestPersistentStorage();
+      window.addEventListener('pointerdown', requestPersistentStorage, { once: true });
+    }
   </script>
 
   <div id="app"></div>
@@ -667,6 +695,8 @@
     import { SMAAPass } from 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/postprocessing/SMAAPass.js';
     import { OutputPass } from 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/postprocessing/OutputPass.js';
 
+    await window.showroomServiceWorkerReady;
+
     const app = document.getElementById('app');
     const loadingScreen = document.getElementById('loadingScreen');
     const loadingStatus = document.getElementById('loadingStatus');
@@ -695,6 +725,7 @@
     let activeModelRoot = null;
     let modelRequestId = 0;
     let modelLoadTimeout;
+    let modelSlowTimeout;
     let loadingTransitionTimeout;
     let initialShowroom = true;
     const loadedModels = new Map();
@@ -722,6 +753,7 @@
       if (!modelReady || modelFailed || !environmentReady || loadingFinished) return;
       loadingFinished = true;
       window.clearTimeout(modelLoadTimeout);
+      window.clearTimeout(modelSlowTimeout);
       window.clearTimeout(window.moduleLoadFallback);
       loadingScreen.classList.remove('has-error');
       loadingProgress.style.width = '100%';
@@ -739,6 +771,7 @@
       if (requestId !== modelRequestId) return;
       console.error(`Failed to load ${vehicles[vehicleId].modelName}:`, error);
       window.clearTimeout(modelLoadTimeout);
+      window.clearTimeout(modelSlowTimeout);
       modelFailed = true;
       modelProgress = 1;
       loadingProgress.style.width = '100%';
@@ -753,7 +786,8 @@
         document.getElementById('partTag').textContent = 'LOAD ERROR';
         return;
       }
-      loadingStatus.textContent = `${vehicles[vehicleId].modelName} could not be loaded. Check your connection and try again.`;
+      loadingStatus.textContent =
+        `${vehicles[vehicleId].modelName} did not finish downloading. Your connection may be slow or interrupted; try again when ready.`;
       loadingScreen.classList.add('has-error');
     }
 
@@ -782,6 +816,8 @@
     camera.position.set(7, 3.2, 8);
 
     let renderer;
+    let getSafePixelRatio;
+    let maxShadowMapSize;
     try {
       renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
     } catch (antialiasError) {
@@ -800,7 +836,29 @@
     }
     try {
       renderer.setSize(innerWidth, innerHeight, false);
-      renderer.setPixelRatio(Number(document.getElementById('antialiasSelect').value));
+      const maxRenderbufferSize = renderer.getContext().getParameter(renderer.getContext().MAX_RENDERBUFFER_SIZE);
+      const maxTextureSize = renderer.capabilities.maxTextureSize;
+      const maxRenderDimension = Math.min(maxRenderbufferSize, maxTextureSize);
+      const availableMemory = navigator.deviceMemory || 4;
+      maxShadowMapSize = Math.min(maxRenderDimension, availableMemory <= 8 ? 2048 : maxRenderDimension);
+      getSafePixelRatio = (requestedRatio, width, height) => {
+        const viewportPixels = width * height;
+        const memoryPixelLimit = availableMemory <= 4 ? 6 * 1024 * 1024 : 8 * 1024 * 1024;
+        const maxComposerPixels = Math.min(memoryPixelLimit, viewportPixels > 4 * 1024 * 1024
+          ? 8 * 1024 * 1024
+          : memoryPixelLimit);
+        return Math.min(
+          requestedRatio,
+          maxRenderDimension / width,
+          maxRenderDimension / height,
+          Math.sqrt(maxComposerPixels / viewportPixels)
+        );
+      };
+      renderer.setPixelRatio(getSafePixelRatio(
+        Number(document.getElementById('antialiasSelect').value),
+        innerWidth,
+        innerHeight
+      ));
       renderer.shadowMap.enabled = true;
       renderer.shadowMap.type = THREE.PCFSoftShadowMap;
       renderer.toneMapping = THREE.ACESFilmicToneMapping;
@@ -1021,6 +1079,7 @@
       if (!vehicles[vehicleId]) return;
       const requestId = ++modelRequestId;
       window.clearTimeout(modelLoadTimeout);
+      window.clearTimeout(modelSlowTimeout);
       window.clearTimeout(loadingTransitionTimeout);
       selectedVehicleId = vehicleId;
       vehicleSelect.value = vehicleId;
@@ -1039,6 +1098,11 @@
       showLoadingForVehicle(vehicleId);
       modelLoadTimeout = window.setTimeout(() => {
         failModelLoad(vehicleId, requestId, new Error('Model loading timed out.'));
+      }, 180000);
+      modelSlowTimeout = window.setTimeout(() => {
+        if (requestId !== modelRequestId || modelReady || modelFailed) return;
+        loadingStatus.textContent =
+          'The model is still downloading. Large files may take a few minutes on a slow connection.';
       }, 30000);
 
       loader.load(
@@ -1194,15 +1258,13 @@
     const qualitySelect = document.getElementById('qualitySelect');
     qualitySelect.addEventListener('change', () => {
       const settings = qualitySettings[qualitySelect.value];
-      key.shadow.mapSize.set(settings.shadowMapSize, settings.shadowMapSize);
+      const shadowMapSize = Math.min(settings.shadowMapSize, maxShadowMapSize);
+      key.shadow.mapSize.set(shadowMapSize, shadowMapSize);
       key.shadow.radius = settings.shadowRadius;
       key.shadow.needsUpdate = true;
     });
     const antialiasSelect = document.getElementById('antialiasSelect');
     antialiasSelect.addEventListener('change', () => {
-      const pixelRatio = Number(antialiasSelect.value);
-      renderer.setPixelRatio(pixelRatio);
-      composer.setPixelRatio(pixelRatio);
       resizeScene();
     });
 
@@ -1322,6 +1384,9 @@
 
       camera.aspect = width / height;
       camera.updateProjectionMatrix();
+      const pixelRatio = getSafePixelRatio(Number(antialiasSelect.value), width, height);
+      renderer.setPixelRatio(pixelRatio);
+      composer.setPixelRatio(pixelRatio);
       if (modelSize) {
         const spherical = new THREE.Spherical().setFromVector3(camera.position.clone().sub(controls.target));
         spherical.radius = cinematicActive
