@@ -1,0 +1,1222 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+  <title>COSMIC — 1993 McLaren F1</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      margin: 0;
+      width: 100%;
+      height: 100%;
+      min-height: 100%;
+      overflow: hidden;
+      background: linear-gradient(145deg, #24344a, #111a28 65%, #182333);
+      color: #fff;
+      font-family: Inter, system-ui, Arial, sans-serif;
+    }
+
+    #app {
+      width: 100%;
+      height: 100vh;
+      height: 100dvh;
+      position: relative;
+    }
+
+    canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+      touch-action: none;
+      outline: none;
+    }
+
+    .hud {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      transition: opacity .4s ease;
+    }
+
+    .cinematic-toggle {
+      position: absolute;
+      left: 28px;
+      top: 83px;
+      padding: 9px 12px;
+      border: 1px solid #ffffff22;
+      border-radius: 999px;
+      background: #0d1017cc;
+      color: #e8f2ff;
+      font: inherit;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: .1em;
+      pointer-events: auto;
+      cursor: pointer;
+      transition: background .2s ease, border-color .2s ease;
+    }
+
+    .cinematic-toggle:hover,
+    .cinematic-toggle[aria-pressed="true"] {
+      border-color: #7dd3fc88;
+      background: #13283bdc;
+    }
+
+    .selection-toggle {
+      position: absolute;
+      left: 28px;
+      top: 126px;
+      padding: 9px 12px;
+      border: 1px solid #ffffff22;
+      border-radius: 999px;
+      background: #0d1017cc;
+      color: #e8f2ff;
+      font: inherit;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: .1em;
+      pointer-events: auto;
+      cursor: pointer;
+      transition: background .2s ease, border-color .2s ease;
+    }
+
+    .selection-toggle:hover,
+    .selection-toggle[aria-pressed="true"] {
+      border-color: #7dd3fc88;
+      background: #13283bdc;
+    }
+
+    .top {
+      position: absolute;
+      left: 28px;
+      top: 24px;
+    }
+
+    .logo {
+      font-size: 28px;
+      font-weight: 900;
+      letter-spacing: .22em;
+    }
+
+    .sub {
+      margin-top: 4px;
+      color: #8f98a8;
+      font-size: 10px;
+      letter-spacing: .28em;
+    }
+
+    .panel {
+      position: absolute;
+      right: 26px;
+      top: 26px;
+      width: 280px;
+      padding: 18px;
+      border: 1px solid #ffffff16;
+      background: linear-gradient(145deg, #10131ad9, #07090dcc);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+      border-radius: 18px;
+      box-shadow: 0 20px 70px #0008;
+      transition: all 0.3s ease;
+    }
+
+    .panel h2 {
+      margin: 0 0 6px;
+      font-size: 20px;
+      text-transform: uppercase;
+    }
+
+    .panel p {
+      margin: 0;
+      color: #aeb6c4;
+      font-size: 13px;
+      line-height: 1.5;
+      min-height: 40px;
+    }
+
+    .hint {
+      position: absolute;
+      left: 50%;
+      bottom: 28px;
+      transform: translateX(-50%);
+      padding: 10px 15px;
+      border-radius: 999px;
+      background: #0d1017cc;
+      border: 1px solid #ffffff18;
+      color: #c9d0db;
+      font-size: 12px;
+      letter-spacing: .04em;
+    }
+
+    .quality-controls {
+      position: absolute;
+      left: 26px;
+      bottom: 24px;
+      display: flex;
+      gap: 8px;
+      pointer-events: auto;
+    }
+
+    .quality-control {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 7px 10px;
+      border: 1px solid #ffffff18;
+      border-radius: 10px;
+      background: #0d1017cc;
+      color: #c9d0db;
+      font-size: 10px;
+      letter-spacing: .1em;
+    }
+
+    .quality-control select {
+      appearance: none;
+      -webkit-appearance: none;
+      min-width: 68px;
+      border: 1px solid #ffffff1c;
+      border-radius: 6px;
+      outline: 0;
+      padding: 5px 22px 5px 8px;
+      background-color: #151d29;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='m1 1 4 4 4-4' fill='none' stroke='%237dd3fc' stroke-width='1.5'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 7px center;
+      color: #fff;
+      font: inherit;
+      letter-spacing: .04em;
+      cursor: pointer;
+    }
+
+    .quality-control select:focus-visible {
+      border-color: #7dd3fc;
+      box-shadow: 0 0 0 2px #7dd3fc33;
+    }
+
+    .quality-control option {
+      background: #101824;
+      color: #fff;
+    }
+
+    @media(max-width: 700px) {
+      .quality-controls {
+        left: 14px;
+        bottom: 58px;
+        flex-direction: column;
+        gap: 6px;
+      }
+
+      .quality-control {
+        justify-content: space-between;
+        min-width: 148px;
+        padding: 5px 7px;
+      }
+
+      .quality-control select {
+        min-width: 68px;
+        padding-top: 4px;
+        padding-bottom: 4px;
+      }
+    }
+
+    .tag {
+      display: inline-block;
+      margin-top: 13px;
+      padding: 6px 9px;
+      border-radius: 7px;
+      background: #ffffff0c;
+      color: #7dd3fc;
+      font-size: 10px;
+      letter-spacing: .12em;
+      font-weight: bold;
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 9px;
+      margin-top: 15px;
+    }
+
+    .stat {
+      padding: 10px;
+      border-radius: 10px;
+      background: #ffffff07;
+    }
+
+    .stat b {
+      display: block;
+      font-size: 14px;
+    }
+
+    .stat span {
+      font-size: 9px;
+      color: #788292;
+      letter-spacing: .1em;
+    }
+
+    .cross {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: 24px;
+      height: 24px;
+      transform: translate(-50%, -50%);
+      opacity: .18;
+    }
+
+    .cross:before,
+    .cross:after {
+      content: "";
+      position: absolute;
+      background: #fff;
+    }
+
+    .cross:before {
+      width: 1px;
+      height: 24px;
+      left: 12px;
+    }
+
+    .cross:after {
+      height: 1px;
+      width: 24px;
+      top: 12px;
+    }
+
+    #errorBox {
+      display: none;
+      position: absolute;
+      z-index: 9999;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: #1a0b0b;
+      border: 1px solid #ff4444;
+      color: #ffb3b3;
+      padding: 25px;
+      border-radius: 12px;
+      text-align: center;
+      max-width: 400px;
+      box-shadow: 0 10px 40px rgba(255, 0, 0, 0.2);
+    }
+
+    .loading-screen {
+      position: fixed;
+      inset: 0;
+      z-index: 10000;
+      display: grid;
+      place-items: center;
+      padding: 24px;
+      background: radial-gradient(ellipse at 50% 42%, #24384c 0%, #101a27 45%, #080d15 100%);
+      opacity: 1;
+      visibility: visible;
+      transition: opacity .65s ease, visibility .65s ease;
+    }
+
+    .loading-screen.is-hidden {
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+    }
+
+    .loading-card {
+      width: min(380px, 100%);
+      text-align: center;
+    }
+
+    .loading-mark {
+      margin: 0 0 12px;
+      font-size: clamp(28px, 7vw, 42px);
+      font-weight: 900;
+      letter-spacing: .24em;
+    }
+
+    .loading-model {
+      margin: 0;
+      color: #b7c8d9;
+      font-size: 11px;
+      letter-spacing: .2em;
+      text-transform: uppercase;
+    }
+
+    .loading-status {
+      min-height: 20px;
+      margin: 30px 0 10px;
+      color: #c7d1dc;
+      font-size: 12px;
+    }
+
+    .loading-track {
+      height: 3px;
+      overflow: hidden;
+      border-radius: 99px;
+      background: #ffffff18;
+    }
+
+    .loading-progress {
+      width: 0;
+      height: 100%;
+      border-radius: inherit;
+      background: linear-gradient(90deg, #7dd3fc, #e1f6ff);
+      box-shadow: 0 0 14px #7dd3fc99;
+      transition: width .25s ease;
+    }
+
+    .loading-retry {
+      display: none;
+      margin: 20px auto 0;
+      padding: 10px 16px;
+      border: 1px solid #ffffff30;
+      border-radius: 999px;
+      background: #ffffff10;
+      color: #fff;
+      font: inherit;
+      font-size: 12px;
+      cursor: pointer;
+    }
+
+    .loading-screen.has-error .loading-retry {
+      display: block;
+    }
+
+    @media(max-width: 700px) {
+      .cinematic-toggle {
+        left: 18px;
+        top: 62px;
+        padding: 7px 10px;
+        font-size: 9px;
+      }
+
+      .selection-toggle {
+        left: 18px;
+        top: 94px;
+        padding: 7px 10px;
+        font-size: 9px;
+      }
+
+      .hud .panel {
+        top: 135px;
+        right: 14px;
+        left: 14px;
+        width: auto;
+        padding: 10px 12px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        border-radius: 12px;
+      }
+
+      .panel h2 {
+        margin: 0;
+        font-size: 15px;
+      }
+
+      .panel p,
+      .stats {
+        display: none;
+      }
+
+      .tag {
+        flex-shrink: 0;
+        margin: 0;
+        padding: 5px 7px;
+        font-size: 9px;
+      }
+
+      .top {
+        left: 18px;
+        top: 18px;
+      }
+
+      .hint {
+        bottom: 14px;
+        left: auto;
+        right: 14px;
+        transform: none;
+        font-size: 10px;
+        white-space: nowrap;
+      }
+
+      .logo {
+        font-size: 22px;
+      }
+    }
+
+    @media(max-height: 560px) and (orientation: landscape) {
+      .hud .panel {
+        top: 14px;
+        right: 14px;
+        left: auto;
+        width: min(255px, 38vw);
+        padding: 10px;
+        display: block;
+      }
+
+      .hud .panel h2 {
+        margin: 0 0 6px;
+      }
+
+      .hud .panel p {
+        display: block;
+        min-height: auto;
+        font-size: 11px;
+      }
+
+      .hud .stats {
+        display: grid;
+        gap: 5px;
+        margin-top: 8px;
+      }
+
+      .stat {
+        padding: 6px;
+      }
+
+      .cinematic-toggle {
+        top: 74px;
+        left: 18px;
+      }
+
+      .selection-toggle {
+        top: 108px;
+        left: 18px;
+      }
+
+      .quality-controls {
+        bottom: 52px;
+        left: 12px;
+      }
+
+      .hint {
+        bottom: 12px;
+        right: 12px;
+        left: auto;
+        transform: none;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <div id="errorBox">
+    <h3 style="margin-top:0; color:#ff4444;">3D Graphics Blocked</h3>
+    <p>Your browser is preventing WebGL from running. To fix this:</p>
+    <ul style="text-align:left; font-size:14px; line-height:1.6;">
+      <li>If using <b>Brave</b>, click the Lion icon in the URL bar and turn <b>Shields DOWN</b>.</li>
+      <li>Ensure <b>Hardware Acceleration</b> is enabled in your browser settings.</li>
+    </ul>
+  </div>
+
+  <div class="loading-screen" id="loadingScreen" role="status" aria-live="polite">
+    <div class="loading-card">
+      <div class="loading-mark">COSMIC</div>
+      <p class="loading-model" id="loadingModel">1993 McLaren F1</p>
+      <p class="loading-status" id="loadingStatus">Preparing the studio...</p>
+      <div class="loading-track" aria-hidden="true">
+        <div class="loading-progress" id="loadingProgress"></div>
+      </div>
+      <button class="loading-retry" id="loadingRetry" type="button">Retry model load</button>
+    </div>
+  </div>
+  <script>
+    window.moduleLoadFallback = window.setTimeout(() => {
+      const screen = document.getElementById('loadingScreen');
+      if (screen.classList.contains('is-hidden') || screen.classList.contains('has-error')) return;
+      document.getElementById('loadingStatus').textContent =
+        'Still loading. Check your connection to the 3D libraries and model.';
+      screen.classList.add('has-error');
+    }, 30000);
+  </script>
+
+  <div id="app"></div>
+
+  <div class="hud">
+    <div class="top">
+      <div class="logo">COSMIC</div>
+      <div class="sub">AUTOMOTIVE / DIGITAL SHOWROOM</div>
+    </div>
+    <button class="cinematic-toggle" id="cinematicToggle" type="button" aria-pressed="true">
+      CINEMATIC • ON
+    </button>
+    <button class="selection-toggle" id="selectionToggle" type="button" aria-pressed="false">
+      OBJECT SELECTION • OFF
+    </button>
+    <div class="panel">
+      <h2 id="partName">McLaren F1 (1993)</h2>
+      <p id="partDesc">Loading model... Drag to orbit and scroll to zoom.</p>
+      <span class="tag" id="partTag">1993 SUPERCAR</span>
+      <div class="stats">
+        <div class="stat"><b id="stat1">V12</b><span>POWERTRAIN</span></div>
+        <div class="stat"><b id="stat2">RWD</b><span>DRIVETRAIN</span></div>
+        <div class="stat"><b id="stat3">3.2s</b><span>0–100 KM/H</span></div>
+        <div class="stat"><b id="stat4">627 HP</b><span>OUTPUT</span></div>
+      </div>
+    </div>
+    <div class="cross"></div>
+    <div class="quality-controls">
+      <div class="quality-control">
+        <label for="vehicleSelect">CAR</label>
+        <select id="vehicleSelect" aria-label="Showroom car">
+          <option value="mclaren">McLaren F1</option>
+          <option value="bmw">BMW M4</option>
+        </select>
+      </div>
+      <div class="quality-control">
+        <label for="qualitySelect">QUALITY</label>
+        <select id="qualitySelect" aria-label="Rendering quality">
+          <option value="low">Low</option>
+          <option value="mid" selected>Mid</option>
+          <option value="high">High</option>
+          <option value="ultra">Ultra</option>
+        </select>
+      </div>
+      <div class="quality-control">
+        <label for="antialiasSelect">AA SCALE</label>
+        <select id="antialiasSelect" aria-label="Antialiasing render scale">
+          <option value="1" selected>1x</option>
+          <option value="2">2x</option>
+          <option value="3">3x</option>
+          <option value="4">4x</option>
+        </select>
+      </div>
+    </div>
+    <div class="hint" id="interactionHint">DRAG TO ROTATE • WHEEL TO ZOOM</div>
+  </div>
+
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js"
+      }
+    }
+  </script>
+  <script type="module">
+    import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
+    import { OrbitControls } from 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/controls/OrbitControls.js';
+    import { RoomEnvironment } from 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/environments/RoomEnvironment.js';
+    import { GLTFLoader } from 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/loaders/GLTFLoader.js';
+    import { RGBELoader } from 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/loaders/RGBELoader.js';
+    import { EffectComposer } from 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/postprocessing/EffectComposer.js';
+    import { RenderPass } from 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/postprocessing/RenderPass.js';
+    import { SMAAPass } from 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/postprocessing/SMAAPass.js';
+    import { OutputPass } from 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/postprocessing/OutputPass.js';
+
+    const app = document.getElementById('app');
+    const loadingScreen = document.getElementById('loadingScreen');
+    const loadingStatus = document.getElementById('loadingStatus');
+    const loadingProgress = document.getElementById('loadingProgress');
+    const loadingRetry = document.getElementById('loadingRetry');
+    const loadingModel = document.getElementById('loadingModel');
+    const vehicleSelect = document.getElementById('vehicleSelect');
+    const vehicles = {
+      mclaren: {
+        title: 'McLaren F1 (1993)',
+        modelName: '1993 McLaren F1',
+        file: 'mclaren_f1_1993_by_alex.ka.glb',
+        tag: '1993 SUPERCAR',
+        stats: ['V12', 'RWD', '3.2s', '627 HP']
+      },
+      bmw: {
+        title: 'BMW M4',
+        modelName: 'BMW M4',
+        file: 'bmw_m4.glb',
+        tag: 'BMW M4',
+        stats: ['INLINE-6', 'RWD', '4.2s', '473 HP']
+      }
+    };
+    let activeVehicleId = null;
+    let selectedVehicleId = 'mclaren';
+    let activeModelRoot = null;
+    let modelRequestId = 0;
+    let modelLoadTimeout;
+    let loadingTransitionTimeout;
+    let initialShowroom = true;
+    const loadedModels = new Map();
+    let modelProgress = 0;
+    let environmentProgress = 0;
+    let modelReady = false;
+    let modelFailed = false;
+    let environmentReady = false;
+    let loadingFinished = false;
+    let environmentTimeout;
+
+    loadingRetry.addEventListener('click', () => loadVehicle(selectedVehicleId));
+    loadingScreen.querySelector('.loading-mark').setAttribute('aria-hidden', 'true');
+
+    function updateLoadingProgress() {
+      if (modelFailed) return;
+      const progress = Math.round((modelProgress * .8 + environmentProgress * .2) * 100);
+      loadingProgress.style.width = `${progress}%`;
+      loadingStatus.textContent = modelReady
+        ? 'Finishing studio lighting...'
+        : `Loading ${vehicles[selectedVehicleId].modelName} and studio lighting...`;
+    }
+
+    function finishLoading() {
+      if (!modelReady || modelFailed || !environmentReady || loadingFinished) return;
+      loadingFinished = true;
+      window.clearTimeout(modelLoadTimeout);
+      window.clearTimeout(window.moduleLoadFallback);
+      loadingScreen.classList.remove('has-error');
+      loadingProgress.style.width = '100%';
+      loadingStatus.textContent = 'Entering the showroom...';
+      const requestId = modelRequestId;
+      loadingTransitionTimeout = window.setTimeout(() => {
+        if (requestId !== modelRequestId || !loadingFinished) return;
+        loadingScreen.classList.add('is-hidden');
+        if (initialShowroom || cinematicActive) setCinematicMode(true);
+        initialShowroom = false;
+      }, 350);
+    }
+
+    function failModelLoad(vehicleId, requestId, error) {
+      if (requestId !== modelRequestId) return;
+      console.error(`Failed to load ${vehicles[vehicleId].modelName}:`, error);
+      window.clearTimeout(modelLoadTimeout);
+      modelFailed = true;
+      modelProgress = 1;
+      loadingProgress.style.width = '100%';
+      if (activeModelRoot) {
+        vehicleSelect.value = activeVehicleId;
+        selectedVehicleId = activeVehicleId;
+        modelReady = true;
+        modelFailed = false;
+        loadingScreen.classList.add('is-hidden');
+        document.getElementById('partDesc').textContent =
+          `${vehicles[vehicleId].modelName} could not be loaded. Still showing ${vehicles[activeVehicleId].modelName}.`;
+        document.getElementById('partTag').textContent = 'LOAD ERROR';
+        return;
+      }
+      loadingStatus.textContent = `${vehicles[vehicleId].modelName} could not be loaded. Check your connection and try again.`;
+      loadingScreen.classList.add('has-error');
+    }
+
+    const scene = new THREE.Scene();
+    const backgroundCanvas = document.createElement('canvas');
+    backgroundCanvas.width = 1024;
+    backgroundCanvas.height = 1024;
+    const backgroundContext = backgroundCanvas.getContext('2d');
+    const backgroundGradient = backgroundContext.createLinearGradient(0, 0, 0, 1024);
+    backgroundGradient.addColorStop(0, '#293b52');
+    backgroundGradient.addColorStop(.55, '#1c2a3b');
+    backgroundGradient.addColorStop(1, '#111a28');
+    backgroundContext.fillStyle = backgroundGradient;
+    backgroundContext.fillRect(0, 0, 1024, 1024);
+    const showroomGlow = backgroundContext.createRadialGradient(512, 430, 40, 512, 430, 570);
+    showroomGlow.addColorStop(0, 'rgba(94, 131, 165, 0.32)');
+    showroomGlow.addColorStop(1, 'rgba(94, 131, 165, 0)');
+    backgroundContext.fillStyle = showroomGlow;
+    backgroundContext.fillRect(0, 0, 1024, 1024);
+    const backgroundTexture = new THREE.CanvasTexture(backgroundCanvas);
+    backgroundTexture.colorSpace = THREE.SRGBColorSpace;
+    scene.background = backgroundTexture;
+    scene.fog = new THREE.Fog(0x111a28, 35, 90);
+
+    const camera = new THREE.PerspectiveCamera(40, innerWidth / innerHeight, 0.1, 100);
+    camera.position.set(7, 3.2, 8);
+
+    let renderer;
+    try {
+      renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
+    } catch (antialiasError) {
+      console.warn('Native WebGL antialiasing is unavailable; retrying without it and using SMAA.', antialiasError);
+      try {
+        renderer = new THREE.WebGLRenderer({ antialias: false, alpha: false });
+      } catch (webglError) {
+        console.error('Could not initialize WebGL:', webglError);
+        document.getElementById('errorBox').style.display = 'block';
+        document.querySelector('.cross').style.display = 'none';
+        loadingStatus.textContent =
+          'WebGL could not start. Enable hardware acceleration, close other 3D tabs, and reload.';
+        loadingScreen.classList.add('has-error');
+        throw new Error('WebGL initialization failed.');
+      }
+    }
+    try {
+      renderer.setSize(innerWidth, innerHeight, false);
+      renderer.setPixelRatio(Number(document.getElementById('antialiasSelect').value));
+      renderer.shadowMap.enabled = true;
+      renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+      renderer.toneMapping = THREE.ACESFilmicToneMapping;
+      renderer.toneMappingExposure = 0.9;
+      renderer.outputColorSpace = THREE.SRGBColorSpace;
+      app.appendChild(renderer.domElement);
+    } catch (error) {
+      console.error('Could not configure the WebGL renderer:', error);
+      document.getElementById('errorBox').style.display = 'block';
+      document.querySelector('.cross').style.display = 'none';
+      loadingStatus.textContent =
+        'WebGL could not start. Enable hardware acceleration, close other 3D tabs, and reload.';
+      loadingScreen.classList.add('has-error');
+      throw new Error('WebGL renderer setup failed.');
+    }
+
+    const composer = new EffectComposer(renderer);
+    composer.addPass(new RenderPass(scene, camera));
+    composer.addPass(new SMAAPass());
+    composer.addPass(new OutputPass());
+
+    const pmrem = new THREE.PMREMGenerator(renderer);
+    scene.environment = pmrem.fromScene(new RoomEnvironment(renderer), 0.04).texture;
+    environmentTimeout = window.setTimeout(() => {
+      if (environmentReady) return;
+      console.warn('Studio HDRI timed out; continuing with the built-in room environment.');
+      environmentProgress = 1;
+      environmentReady = true;
+      updateLoadingProgress();
+      finishLoading();
+    }, 12000);
+    new RGBELoader()
+      .setDataType(THREE.HalfFloatType)
+      .load(
+        'https://dl.polyhaven.org/file/ph-assets/HDRIs/hdr/1k/studio_small_09_1k.hdr',
+        hdrTexture => {
+          window.clearTimeout(environmentTimeout);
+          const environment = pmrem.fromEquirectangular(hdrTexture).texture;
+          scene.environment = environment;
+          hdrTexture.dispose();
+          pmrem.dispose();
+          environmentProgress = 1;
+          environmentReady = true;
+          updateLoadingProgress();
+          finishLoading();
+        },
+        event => {
+          if (event.total > 0) environmentProgress = event.loaded / event.total;
+          updateLoadingProgress();
+        },
+        error => {
+          window.clearTimeout(environmentTimeout);
+          console.error('Failed to load the studio HDRI; using the built-in room environment:', error);
+          pmrem.dispose();
+          environmentProgress = 1;
+          environmentReady = true;
+          updateLoadingProgress();
+          finishLoading();
+        }
+      );
+
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.target.set(0, .75, 0);
+    controls.minDistance = 4;
+    controls.maxDistance = 26;
+    controls.maxPolarAngle = Math.PI / 2.05;
+
+    const cinematicToggle = document.getElementById('cinematicToggle');
+    let cinematicActive = false;
+    let cinematicElapsed = 0;
+    let previousFrameTime = 0;
+    let modelSize = null;
+    let modelScale = 1;
+    let tourTheta = 0;
+    let tourPhi = Math.PI / 2;
+    let tourRadius = camera.position.distanceTo(controls.target);
+
+    function setCinematicMode(enabled) {
+      cinematicActive = enabled;
+      cinematicToggle.setAttribute('aria-pressed', String(enabled));
+      cinematicToggle.textContent = enabled ? 'CINEMATIC • ON' : 'CINEMATIC • OFF';
+      if (enabled) {
+        const spherical = new THREE.Spherical().setFromVector3(camera.position.clone().sub(controls.target));
+        tourTheta = spherical.theta;
+        tourPhi = spherical.phi;
+        tourRadius = spherical.radius;
+        cinematicElapsed = 0;
+        previousFrameTime = 0;
+      }
+    }
+
+    function getModelFitDistance() {
+      if (!modelSize) return camera.position.distanceTo(controls.target);
+      const verticalFov = THREE.MathUtils.degToRad(camera.fov);
+      const horizontalFov = 2 * Math.atan(Math.tan(verticalFov / 2) * camera.aspect);
+      return Math.max(
+        modelSize.y * modelScale / (2 * Math.tan(verticalFov / 2)),
+        Math.hypot(modelSize.x, modelSize.z) * modelScale / (2 * Math.tan(horizontalFov / 2))
+      ) * 1.12;
+    }
+
+    controls.addEventListener('start', () => {
+      if (cinematicActive) setCinematicMode(false);
+    });
+    cinematicToggle.addEventListener('click', () => setCinematicMode(!cinematicActive));
+
+    const car = new THREE.Group();
+    car.rotation.y = -0.35;
+    scene.add(car);
+    const selectable = [];
+    const loader = new GLTFLoader();
+
+    function prepareModel(gltf) {
+      const model = gltf.scene;
+      model.updateMatrixWorld(true);
+
+      const embeddedGroundPlanes = [];
+      model.traverse(object => {
+        if (!object.isMesh) return;
+        const materials = Array.isArray(object.material) ? object.material : [object.material];
+        if (!materials.some(material => material.name.toLowerCase() === 'floor')) return;
+
+        const meshBounds = new THREE.Box3().setFromObject(object);
+        const dimensions = meshBounds.getSize(new THREE.Vector3());
+        const sortedDimensions = [dimensions.x, dimensions.y, dimensions.z].sort((a, b) => a - b);
+        if (sortedDimensions[0] < .02 && sortedDimensions[2] > 5) {
+          embeddedGroundPlanes.push(object);
+        }
+      });
+      embeddedGroundPlanes.forEach(object => object.removeFromParent());
+      model.updateMatrixWorld(true);
+
+      const bounds = new THREE.Box3().setFromObject(model);
+      const size = bounds.getSize(new THREE.Vector3());
+      const center = bounds.getCenter(new THREE.Vector3());
+      const scale = 5.4 / Math.max(size.x, size.y, size.z);
+      const normalizedModel = new THREE.Group();
+      normalizedModel.scale.setScalar(scale);
+      normalizedModel.position.set(-center.x * scale, -bounds.min.y * scale + .025, -center.z * scale);
+      normalizedModel.add(model);
+
+      const modelSelectable = [];
+      model.traverse(object => {
+        if (!object.isMesh) return;
+        object.castShadow = true;
+        object.receiveShadow = true;
+        const materials = Array.isArray(object.material) ? object.material : [object.material];
+        materials.forEach(material => {
+          if ('envMapIntensity' in material) material.envMapIntensity = 0.42;
+          for (const texture of [material.map, material.normalMap, material.roughnessMap, material.metalnessMap]) {
+            if (texture) texture.anisotropy = Math.min(renderer.capabilities.getMaxAnisotropy(), 8);
+          }
+        });
+        modelSelectable.push(object);
+      });
+
+      return { root: normalizedModel, size, scale, selectable: modelSelectable };
+    }
+
+    function updateVehicleOverview(vehicleId) {
+      const vehicle = vehicles[vehicleId];
+      document.getElementById('partName').textContent = vehicle.title;
+      document.getElementById('partDesc').textContent =
+        `${vehicle.modelName}. Drag to orbit, scroll to zoom, or click a component to inspect it.`;
+      document.getElementById('partTag').textContent = vehicle.tag;
+      document.getElementById('stat1').textContent = vehicle.stats[0];
+      document.getElementById('stat2').textContent = vehicle.stats[1];
+      document.getElementById('stat3').textContent = vehicle.stats[2];
+      document.getElementById('stat4').textContent = vehicle.stats[3];
+      document.title = `COSMIC — ${vehicle.title}`;
+    }
+
+    function activateVehicle(vehicleId) {
+      const loadedModel = loadedModels.get(vehicleId);
+      if (!loadedModel) throw new Error(`No loaded model is cached for ${vehicleId}.`);
+
+      clearSelection(activeVehicleId || vehicleId);
+      if (activeModelRoot) car.remove(activeModelRoot);
+      activeVehicleId = vehicleId;
+      activeModelRoot = loadedModel.root;
+      car.add(activeModelRoot);
+      modelSize = loadedModel.size;
+      modelScale = loadedModel.scale;
+      selectable.splice(0, selectable.length, ...loadedModel.selectable);
+      vehicleSelect.value = vehicleId;
+
+      const fitDistance = getModelFitDistance();
+      const viewDirection = camera.position.clone().sub(controls.target).normalize();
+      camera.position.copy(controls.target).addScaledVector(viewDirection, fitDistance);
+      controls.maxDistance = Math.max(26, fitDistance * 1.5);
+      controls.update();
+      updateVehicleOverview(vehicleId);
+    }
+
+    function showLoadingForVehicle(vehicleId) {
+      loadingFinished = false;
+      modelFailed = false;
+      modelReady = false;
+      modelProgress = 0;
+      loadingModel.textContent = vehicles[vehicleId].modelName;
+      loadingProgress.style.width = '0%';
+      loadingStatus.textContent = `Loading ${vehicles[vehicleId].modelName}...`;
+      loadingScreen.classList.remove('is-hidden', 'has-error');
+    }
+
+    function loadVehicle(vehicleId) {
+      if (!vehicles[vehicleId]) return;
+      const requestId = ++modelRequestId;
+      window.clearTimeout(modelLoadTimeout);
+      window.clearTimeout(loadingTransitionTimeout);
+      selectedVehicleId = vehicleId;
+      vehicleSelect.value = vehicleId;
+
+      if (loadedModels.has(vehicleId)) {
+        activateVehicle(vehicleId);
+        modelReady = true;
+        modelFailed = false;
+        loadingFinished = true;
+        loadingScreen.classList.remove('has-error');
+        loadingScreen.classList.add('is-hidden');
+        if (cinematicActive) setCinematicMode(true);
+        return;
+      }
+
+      showLoadingForVehicle(vehicleId);
+      modelLoadTimeout = window.setTimeout(() => {
+        failModelLoad(vehicleId, requestId, new Error('Model loading timed out.'));
+      }, 30000);
+
+      loader.load(
+        new URL(`./${vehicles[vehicleId].file}`, import.meta.url).href,
+        gltf => {
+          try {
+            const preparedModel = prepareModel(gltf);
+            loadedModels.set(vehicleId, preparedModel);
+            if (requestId !== modelRequestId || selectedVehicleId !== vehicleId) return;
+
+            activateVehicle(vehicleId);
+            modelProgress = 1;
+            modelReady = true;
+            updateLoadingProgress();
+            finishLoading();
+          } catch (error) {
+            failModelLoad(vehicleId, requestId, error);
+          }
+        },
+        event => {
+          if (requestId !== modelRequestId) return;
+          if (event.total > 0) modelProgress = event.loaded / event.total;
+          updateLoadingProgress();
+        },
+        error => failModelLoad(vehicleId, requestId, error)
+      );
+    }
+
+    vehicleSelect.addEventListener('change', () => loadVehicle(vehicleSelect.value));
+    loadVehicle(selectedVehicleId);
+
+    // Environment setup
+    const floorMaterial = new THREE.MeshPhysicalMaterial({
+      color: 0x354151,
+      roughness: .68,
+      metalness: .06,
+      clearcoat: .12,
+      clearcoatRoughness: .42,
+      envMapIntensity: .2
+    });
+    const floor = new THREE.Mesh(new THREE.CircleGeometry(32, 128), floorMaterial);
+    floor.rotation.x = -Math.PI / 2;
+    floor.position.y = -.11;
+    floor.receiveShadow = true;
+    scene.add(floor);
+
+    const cycloramaProfile = [new THREE.Vector2(32, -.11)];
+    for (let step = 1; step <= 16; step++) {
+      const angle = (step / 16) * Math.PI / 2;
+      cycloramaProfile.push(new THREE.Vector2(
+        32 + 2 * Math.sin(angle),
+        -.11 + 2 - 2 * Math.cos(angle)
+      ));
+    }
+    cycloramaProfile.push(new THREE.Vector2(34, 49.87));
+    const cycloramaMaterial = floorMaterial.clone();
+    cycloramaMaterial.color.set(0x283548);
+    cycloramaMaterial.emissive.set(0x182538);
+    cycloramaMaterial.emissiveIntensity = .65;
+    cycloramaMaterial.side = THREE.DoubleSide;
+    const cyclorama = new THREE.Mesh(new THREE.LatheGeometry(cycloramaProfile, 128), cycloramaMaterial);
+    cyclorama.receiveShadow = true;
+    scene.add(cyclorama);
+
+    const displayPlatform = new THREE.Mesh(
+      new THREE.CylinderGeometry(8.5, 8.5, .12, 128),
+      new THREE.MeshPhysicalMaterial({
+        color: 0x566272,
+        roughness: .62,
+        metalness: .08,
+        clearcoat: .16,
+        clearcoatRoughness: .48
+      })
+    );
+    displayPlatform.position.y = -.04;
+    displayPlatform.receiveShadow = true;
+    displayPlatform.castShadow = true;
+    scene.add(displayPlatform);
+    const platformEdge = new THREE.Mesh(
+      new THREE.TorusGeometry(8.48, .035, 10, 160),
+      new THREE.MeshStandardMaterial({ color: 0x7893a8, metalness: .7, roughness: .3 })
+    );
+    platformEdge.rotation.x = Math.PI / 2;
+    platformEdge.position.y = .022;
+    scene.add(platformEdge);
+
+    scene.add(new THREE.HemisphereLight(0xc6d9ed, 0x34313a, .55));
+
+    const key = new THREE.DirectionalLight(0xffffff, 1.35); key.position.set(5, 8, 6); key.castShadow = true; key.shadow.mapSize.set(1024, 1024); scene.add(key);
+    scene.add(key.target);
+    key.shadow.camera.left = -10;
+    key.shadow.camera.right = 10;
+    key.shadow.camera.top = 10;
+    key.shadow.camera.bottom = -10;
+    key.shadow.camera.near = 0.1;
+    key.shadow.camera.far = 40;
+    key.shadow.camera.updateProjectionMatrix();
+    key.shadow.bias = -0.00015;
+    key.shadow.normalBias = 0.025;
+    key.shadow.radius = 3;
+    const fill = new THREE.DirectionalLight(0x9dbbe0, .38); fill.position.set(-5, 4, -6); scene.add(fill);
+    const rim = new THREE.PointLight(0x7dd3fc, 2.2, 18); rim.position.set(0, 3, -5); scene.add(rim);
+
+    const qualitySettings = {
+      low: { shadowMapSize: 512, shadowRadius: 1 },
+      mid: { shadowMapSize: 1024, shadowRadius: 2 },
+      high: { shadowMapSize: 2048, shadowRadius: 3 },
+      ultra: { shadowMapSize: 4096, shadowRadius: 4 }
+    };
+    const qualitySelect = document.getElementById('qualitySelect');
+    qualitySelect.addEventListener('change', () => {
+      const settings = qualitySettings[qualitySelect.value];
+      key.shadow.mapSize.set(settings.shadowMapSize, settings.shadowMapSize);
+      key.shadow.radius = settings.shadowRadius;
+      key.shadow.needsUpdate = true;
+    });
+    const antialiasSelect = document.getElementById('antialiasSelect');
+    antialiasSelect.addEventListener('change', () => {
+      const pixelRatio = Number(antialiasSelect.value);
+      renderer.setPixelRatio(pixelRatio);
+      composer.setPixelRatio(pixelRatio);
+      resizeScene();
+    });
+
+    const originalScales = new Map();
+
+    let selected = null;
+    let objectSelectionEnabled = false;
+    const raycaster = new THREE.Raycaster();
+    const mouse = new THREE.Vector2();
+    const selectionToggle = document.getElementById('selectionToggle');
+    const interactionHint = document.getElementById('interactionHint');
+
+    function clearSelection(vehicleId = activeVehicleId || selectedVehicleId) {
+      if (selected) {
+        selected.scale.copy(originalScales.get(selected));
+        selected = null;
+      }
+      if (vehicles[vehicleId]) updateVehicleOverview(vehicleId);
+    }
+
+    selectionToggle.addEventListener('click', () => {
+      objectSelectionEnabled = !objectSelectionEnabled;
+      selectionToggle.setAttribute('aria-pressed', String(objectSelectionEnabled));
+      selectionToggle.textContent = objectSelectionEnabled
+        ? 'OBJECT SELECTION • ON'
+        : 'OBJECT SELECTION • OFF';
+      interactionHint.textContent = objectSelectionEnabled
+        ? 'CLICK PARTS • DRAG TO ROTATE • WHEEL TO ZOOM'
+        : 'DRAG TO ROTATE • WHEEL TO ZOOM';
+      if (!objectSelectionEnabled) clearSelection();
+    });
+
+    // Interaction logic: Detects drag vs click
+    let downX, downY;
+    renderer.domElement.addEventListener('pointerdown', e => {
+      downX = e.clientX;
+      downY = e.clientY;
+    });
+
+    renderer.domElement.addEventListener('pointerup', e => {
+      // If mouse moved heavily during click, it was a camera drag, not a selection click
+      if (Math.abs(e.clientX - downX) > 5 || Math.abs(e.clientY - downY) > 5) return;
+      if (!objectSelectionEnabled) return;
+
+      const bounds = renderer.domElement.getBoundingClientRect();
+      mouse.x = ((e.clientX - bounds.left) / bounds.width) * 2 - 1;
+      mouse.y = -((e.clientY - bounds.top) / bounds.height) * 2 + 1;
+      raycaster.setFromCamera(mouse, camera);
+
+      const hits = raycaster.intersectObjects(selectable, false);
+
+      if (!hits.length) {
+        clearSelection();
+        return;
+      }
+
+      select(hits[0].object);
+    });
+
+    function select(object) {
+      if (selected && selected !== object) {
+        selected.scale.copy(originalScales.get(selected));
+      }
+      selected = object;
+      if (!originalScales.has(object)) originalScales.set(object, object.scale.clone());
+
+      const vehicle = vehicles[activeVehicleId];
+      document.getElementById('partName').textContent = object.name || `${vehicle.modelName} component`;
+      document.getElementById('partDesc').textContent =
+        `Part of the ${vehicle.modelName}. Click away to return to the full-car overview.`;
+      document.getElementById('partTag').textContent = 'MODEL COMPONENT';
+      document.getElementById('stat1').textContent = vehicle.stats[0];
+      document.getElementById('stat2').textContent = vehicle.stats[1];
+      document.getElementById('stat3').textContent = vehicle.stats[2];
+      document.getElementById('stat4').textContent = vehicle.stats[3];
+
+      object.scale.copy(originalScales.get(object)).multiplyScalar(1.06);
+    }
+
+    function animate() {
+      requestAnimationFrame(animate);
+      const now = performance.now();
+      const delta = previousFrameTime ? Math.min((now - previousFrameTime) / 1000, .05) : 0;
+      previousFrameTime = now;
+      controls.update();
+      key.position.set(car.position.x + 5, car.position.y + 8, car.position.z + 6);
+      key.target.position.copy(car.position);
+      if (cinematicActive && modelReady) {
+        cinematicElapsed += delta;
+        const spherical = new THREE.Spherical(
+          tourRadius * (1 + Math.sin(cinematicElapsed * .13) * .018),
+          THREE.MathUtils.clamp(tourPhi + Math.sin(cinematicElapsed * .19) * .16, .88, 1.52),
+          tourTheta + cinematicElapsed * .105
+        );
+        camera.position.setFromSpherical(spherical).add(controls.target);
+        camera.lookAt(controls.target);
+      }
+      composer.render();
+    }
+    animate();
+
+    function resizeScene() {
+      const width = app.clientWidth;
+      const height = app.clientHeight;
+      if (!width || !height) return;
+
+      camera.aspect = width / height;
+      camera.updateProjectionMatrix();
+      if (modelSize) {
+        const spherical = new THREE.Spherical().setFromVector3(camera.position.clone().sub(controls.target));
+        spherical.radius = cinematicActive
+          ? getModelFitDistance()
+          : Math.max(spherical.radius, getModelFitDistance());
+        camera.position.setFromSpherical(spherical).add(controls.target);
+        if (cinematicActive) tourRadius = spherical.radius;
+      }
+      renderer.setSize(width, height, false);
+      composer.setSize(width, height);
+    }
+
+    window.addEventListener('resize', resizeScene);
+    new ResizeObserver(resizeScene).observe(app);
+    resizeScene();
+  </script>
+</body>
+
+</html>
