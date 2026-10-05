@@ -658,6 +658,7 @@
       <div class="quality-control">
         <label for="qualitySelect">QUALITY</label>
         <select id="qualitySelect" aria-label="Rendering quality">
+          <option value="very-low">Very Low</option>
           <option value="low">Low</option>
           <option value="mid" selected>Mid</option>
           <option value="high">High</option>
@@ -667,6 +668,7 @@
       <div class="quality-control">
         <label for="antialiasSelect">AA SCALE</label>
         <select id="antialiasSelect" aria-label="Antialiasing render scale">
+          <option value="0">Off</option>
           <option value="1" selected>1x</option>
           <option value="2">2x</option>
           <option value="3">3x</option>
@@ -820,12 +822,12 @@
     let maxShadowMapSize;
     try {
       renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
-    } catch (antialiasError) {
-      console.warn('Native WebGL antialiasing is unavailable; retrying without it and using SMAA.', antialiasError);
+    } catch (webglError) {
+      console.warn('Native WebGL antialiasing is unavailable; using SMAA instead.', webglError);
       try {
         renderer = new THREE.WebGLRenderer({ antialias: false, alpha: false });
-      } catch (webglError) {
-        console.error('Could not initialize WebGL:', webglError);
+      } catch (fallbackError) {
+        console.error('Could not initialize WebGL:', fallbackError);
         document.getElementById('errorBox').style.display = 'block';
         document.querySelector('.cross').style.display = 'none';
         loadingStatus.textContent =
@@ -855,7 +857,7 @@
         );
       };
       renderer.setPixelRatio(getSafePixelRatio(
-        Number(document.getElementById('antialiasSelect').value),
+        Number(document.getElementById('antialiasSelect').value) || 1,
         innerWidth,
         innerHeight
       ));
@@ -875,10 +877,17 @@
       throw new Error('WebGL renderer setup failed.');
     }
 
+    const antialiasSelect = document.getElementById('antialiasSelect');
     const composer = new EffectComposer(renderer);
     composer.addPass(new RenderPass(scene, camera));
-    composer.addPass(new SMAAPass());
+    const smaaPass = new SMAAPass();
+    composer.addPass(smaaPass);
     composer.addPass(new OutputPass());
+    function updateAntialiasing() {
+      const requestedScale = Number(antialiasSelect.value);
+      smaaPass.enabled = requestedScale !== 0;
+    }
+    updateAntialiasing();
 
     const pmrem = new THREE.PMREMGenerator(renderer);
     scene.environment = pmrem.fromScene(new RoomEnvironment(renderer), 0.04).texture;
@@ -1250,6 +1259,7 @@
     const rim = new THREE.PointLight(0x7dd3fc, 2.2, 18); rim.position.set(0, 3, -5); scene.add(rim);
 
     const qualitySettings = {
+      'very-low': { shadowMapSize: 256, shadowRadius: 1 },
       low: { shadowMapSize: 512, shadowRadius: 1 },
       mid: { shadowMapSize: 1024, shadowRadius: 2 },
       high: { shadowMapSize: 2048, shadowRadius: 3 },
@@ -1263,8 +1273,8 @@
       key.shadow.radius = settings.shadowRadius;
       key.shadow.needsUpdate = true;
     });
-    const antialiasSelect = document.getElementById('antialiasSelect');
     antialiasSelect.addEventListener('change', () => {
+      updateAntialiasing();
       resizeScene();
     });
 
@@ -1384,7 +1394,8 @@
 
       camera.aspect = width / height;
       camera.updateProjectionMatrix();
-      const pixelRatio = getSafePixelRatio(Number(antialiasSelect.value), width, height);
+      const requestedScale = Number(antialiasSelect.value) || 1;
+      const pixelRatio = getSafePixelRatio(requestedScale, width, height);
       renderer.setPixelRatio(pixelRatio);
       composer.setPixelRatio(pixelRatio);
       if (modelSize) {
