@@ -983,7 +983,15 @@
       activeVehicleId = vehicleId;
       activeModelRoot = loadedModel.root;
       car.add(activeModelRoot);
-      bmwContactShadow.visible = vehicleId === 'bmw';
+      const shadowExtent = vehicleId === 'bmw' ? 6.5 : 10;
+      key.shadow.camera.left = -shadowExtent;
+      key.shadow.camera.right = shadowExtent;
+      key.shadow.camera.top = shadowExtent;
+      key.shadow.camera.bottom = -shadowExtent;
+      key.shadow.camera.updateProjectionMatrix();
+      key.shadow.bias = vehicleId === 'bmw' ? -0.0001 : -0.00015;
+      key.shadow.normalBias = vehicleId === 'bmw' ? 0.006 : 0.025;
+      key.shadow.needsUpdate = true;
       modelSize = loadedModel.size;
       modelScale = loadedModel.scale;
       selectable.splice(0, selectable.length, ...loadedModel.selectable);
@@ -1115,52 +1123,6 @@
     platformEdge.rotation.x = Math.PI / 2;
     platformEdge.position.y = .022;
     scene.add(platformEdge);
-
-    const contactShadowCanvas = document.createElement('canvas');
-    contactShadowCanvas.width = 256;
-    contactShadowCanvas.height = 256;
-    const contactShadowContext = contactShadowCanvas.getContext('2d');
-    const contactShadowGradient = contactShadowContext.createRadialGradient(128, 128, 12, 128, 128, 128);
-    contactShadowGradient.addColorStop(0, 'rgba(4, 8, 14, .88)');
-    contactShadowGradient.addColorStop(.45, 'rgba(4, 8, 14, .62)');
-    contactShadowGradient.addColorStop(.78, 'rgba(4, 8, 14, .2)');
-    contactShadowGradient.addColorStop(1, 'rgba(4, 8, 14, 0)');
-    contactShadowContext.fillStyle = contactShadowGradient;
-    contactShadowContext.fillRect(0, 0, 256, 256);
-    const contactShadowTexture = new THREE.CanvasTexture(contactShadowCanvas);
-    const bmwCastShadow = new THREE.Mesh(
-      new THREE.PlaneGeometry(6.4, 3.8),
-      new THREE.MeshBasicMaterial({
-        map: contactShadowTexture,
-        color: 0x080d15,
-        depthWrite: false,
-        opacity: .78,
-        toneMapped: false,
-        transparent: true
-      })
-    );
-    bmwCastShadow.rotation.x = -Math.PI / 2;
-    bmwCastShadow.position.set(-.38, .021, -.42);
-    bmwCastShadow.renderOrder = 1;
-    bmwCastShadow.visible = false;
-    car.add(bmwCastShadow);
-
-    const bmwContactShadow = new THREE.Mesh(
-      new THREE.PlaneGeometry(5.6, 1.8),
-      new THREE.MeshBasicMaterial({
-        map: contactShadowTexture,
-        color: 0x070b12,
-        depthWrite: false,
-        opacity: .96,
-        toneMapped: false,
-        transparent: true
-      })
-    );
-    bmwContactShadow.rotation.x = -Math.PI / 2;
-    bmwContactShadow.position.set(-.12, .022, -.12);
-    bmwContactShadow.renderOrder = 2;
-    bmwContactShadow.visible = false;
-    car.add(bmwContactShadow);
 
     scene.add(new THREE.HemisphereLight(0xc6d9ed, 0x34313a, .55));
 
