@@ -1173,7 +1173,7 @@
     cycloramaMaterial.emissiveIntensity = .65;
     cycloramaMaterial.side = THREE.DoubleSide;
     const cyclorama = new THREE.Mesh(new THREE.LatheGeometry(cycloramaProfile, 128), cycloramaMaterial);
-    cyclorama.receiveShadow = true;
+    cyclorama.receiveShadow = false;
     scene.add(cyclorama);
 
     const displayPlatform = new THREE.Mesh(
@@ -1188,7 +1188,7 @@
     );
     displayPlatform.position.y = -.04;
     displayPlatform.receiveShadow = true;
-    displayPlatform.castShadow = true;
+    displayPlatform.castShadow = false;
     scene.add(displayPlatform);
     const platformEdge = new THREE.Mesh(
       new THREE.TorusGeometry(8.48, .035, 10, 160),
@@ -1259,20 +1259,27 @@
     const rim = new THREE.PointLight(0x7dd3fc, 2.2, 18); rim.position.set(0, 3, -5); scene.add(rim);
 
     const qualitySettings = {
-      'very-low': { shadowMapSize: 256, shadowRadius: 1 },
-      low: { shadowMapSize: 512, shadowRadius: 1 },
-      mid: { shadowMapSize: 1024, shadowRadius: 2 },
-      high: { shadowMapSize: 2048, shadowRadius: 3 },
-      ultra: { shadowMapSize: 4096, shadowRadius: 4 }
+      'very-low': { shadowMapSize: 256 },
+      low: { shadowMapSize: 512 },
+      mid: { shadowMapSize: 1024 },
+      high: { shadowMapSize: 2048 },
+      ultra: { shadowMapSize: 4096 }
     };
     const qualitySelect = document.getElementById('qualitySelect');
-    qualitySelect.addEventListener('change', () => {
+    function updateQualitySettings() {
       const settings = qualitySettings[qualitySelect.value];
       const shadowMapSize = Math.min(settings.shadowMapSize, maxShadowMapSize);
+      if (key.shadow.map &&
+          (key.shadow.map.width !== shadowMapSize || key.shadow.map.height !== shadowMapSize)) {
+        key.shadow.map.dispose();
+        key.shadow.map = null;
+      }
       key.shadow.mapSize.set(shadowMapSize, shadowMapSize);
-      key.shadow.radius = settings.shadowRadius;
+      key.shadow.radius = Math.max(1, shadowMapSize / 512);
       key.shadow.needsUpdate = true;
-    });
+    }
+    qualitySelect.addEventListener('change', updateQualitySettings);
+    updateQualitySettings();
     antialiasSelect.addEventListener('change', () => {
       updateAntialiasing();
       resizeScene();
